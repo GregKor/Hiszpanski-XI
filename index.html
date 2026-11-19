@@ -75,6 +75,8 @@ button:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
 @keyframes fxu{to{transform:translate(-50%,-60px);opacity:0}}
 @media (prefers-reduced-motion:reduce){.fx,.toast{animation:none}}
 body.noemo .card .pic{display:none}
+.mypic{margin-bottom:12px}.mypic img{width:132px;height:132px;border-radius:16px;background:#fff;border:1px solid var(--line)}
+#mnIm img{width:200px;max-width:70%;border-radius:16px;background:#fff;border:1px solid var(--line)}
 .card .w{font-size:2.2rem;font-weight:800;letter-spacing:-.01em}
 .card .t{color:var(--mute);font-size:.9rem;margin-top:8px}
 .row{display:flex;gap:10px;margin-top:14px}
@@ -347,6 +349,18 @@ const M={'todo':'Angielskie „to do”: lista rzeczy do zrobienia to wszystko, 
 'hola':'Hola brzmi jak „ola” (h nieme), a ola to fala: machasz ręką jak falą na powitanie.','buenos días':'Buenos Aires + dni: dobre dni, mówisz do ok. 12, potem buenas tardes.','¿cómo te llamas?':'Cómo = jak, llamas = lama woła: „Jak woła cię lama?” Jak się nazywasz?','me llamo…':'Mnie (me) woła lama (llamo): nazywam się…','¿cómo estás?':'Cómo = jak, estás = jesteś (stan): jak się masz?','bien, gracias. ¿y tú?':'Bien = dobrze, gracias = gracja, y tú brzmi jak „i tu”: „I ty?”','qué bien':'Qué = co/jak, bien = dobrze: „Jak dobrze!” czyli to fajnie.','yo hablo un poco':'Yo = ja, hablo = bla-bla, un poco = po trochu: „Ja bla-bla po trochu.”','¿qué le parece?':'Le = Panu/Pani (grzecznie), parece = wydaje się: „Co się Panu wydaje?”','me gusta mucho':'Gusta ≈ gust: to w moim guście, mucho = dużo.','me alegro':'Allegro w muzyce to radosne tempo: me alegro = cieszę się.','¿en serio?':'Prawie jak po polsku: „serio?” czyli naprawdę?','aquí tiene…':'Aquí = tutaj, tiene = ma: „tutaj ma”, czyli proszę, oto… (podając coś).'};
 Object.assign(M,MJ);const esc=t=>t.replace(/&/g,'&amp;').replace(/</g,'&lt;');
 let mine={},mnOpen=false,mnId=-1;try{mine=JSON.parse(localStorage.getItem('esMemo')||'{}')}catch(e){}
+const DRK='esMnImg3';let DRW={};try{DRW=JSON.parse(localStorage.getItem(DRK))||{}}catch(e){}
+const saveDRW=()=>{const k=Object.keys(DRW);while(k.length>60)delete DRW[k.shift()];try{localStorage.setItem(DRK,JSON.stringify(DRW))}catch(e){}};
+const svgUri=x=>'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(x).replace(/'/g,'%27');
+const SVGOK=new Set(['svg','g','path','circle','ellipse','rect','line','polyline','polygon','defs','lineargradient','radialgradient','stop']);
+const SVGAT=new Set(['viewbox','width','height','x','y','x1','y1','x2','y2','cx','cy','r','rx','ry','d','points','fill','stroke','stroke-width','stroke-linecap','stroke-linejoin','opacity','fill-opacity','stroke-opacity','transform','offset','stop-color','stop-opacity','id','gradientunits','gradienttransform','fx','fy','fill-rule','xmlns','preserveaspectratio']);
+function svgClean(txt){if(!txt||txt.length>16000)return null;let doc;try{doc=new DOMParser().parseFromString(txt,'image/svg+xml')}catch(e){return null}
+if(doc.querySelector('parsererror'))return null;const root=doc.documentElement;if(!root||root.localName.toLowerCase()!=='svg')return null;let n=0,bad=false;
+const attrs=el=>[...el.attributes].forEach(a=>{const k=a.name.toLowerCase();if(!SVGAT.has(k)||/url\(\s*(?!#)|javascript:|data:|[<>]|&#/i.test(a.value))el.removeAttribute(a.name)});
+const walk=el=>[...el.children].forEach(c=>{if(!SVGOK.has(c.localName.toLowerCase())){c.remove();return}if(++n>120){bad=true;return}attrs(c);walk(c)});
+attrs(root);walk(root);if(bad||n<2)return null;root.removeAttribute('width');root.removeAttribute('height');root.setAttribute('xmlns','http://www.w3.org/2000/svg');if(!root.getAttribute('viewBox'))root.setAttribute('viewBox','0 0 200 200');
+const out=new XMLSerializer().serializeToString(root);return out.length>16000?null:out}
+const myPic=w=>DRW[w]?"<div class='mypic'><img alt='Twój rysunek skojarzenia' src='"+svgUri(DRW[w].svg)+"'></div>":'';
 const MNK='esMnAi3';let MNA={};try{MNA=JSON.parse(localStorage.getItem(MNK))||{}}catch(e){}
 const mnSaveA=()=>{const k=Object.keys(MNA);while(k.length>150)delete MNA[k.shift()];try{localStorage.setItem(MNK,JSON.stringify(MNA))}catch(e){}};
 const mnBase=w=>M[w]||M[w.replace(/^(el|la) /,'')]||M[w.replace(/^(el|la) /,'').split(' / ')[0]]||'';
@@ -354,7 +368,7 @@ const MN0='Brak podpowiedzi. Wygeneruj ją przyciskiem poniżej albo wymyśl wł
 function mn(){const id=deck[pos],b=$('#mnBox');if(id!==mnId){mnId=id;mnOpen=false;b.innerHTML=''}
 if(!mnOpen){b.innerHTML='';return}if(b.firstChild)return;const w=V[id][0],pl=V[id][1],cat=V[id][2];
 let hist=[mnBase(w)||MN0].concat(MNA[w]||[]),ix=0;
-b.innerHTML=`<div class='ref'><div class='meta' style='margin:0 0 6px'><b id='mnLb'>Podpowiedź</b><span id='mnNav'></span></div><div id='mnTxt'></div><div class='row' style='margin-top:8px'><button class='btn' id='mnNew' style='flex:2'>🔄 Inna podpowiedź (AI)</button><button class='btn' id='mnUse'>✔ Użyj tej</button></div><div id='mnAm' style='font-size:.88rem;min-height:1.2em;margin-top:4px' aria-live='polite'></div></div><div class='ref'><b>Twoja mnemotechnika</b><textarea id='mnTx' rows='3' placeholder='Wymyśl własne skojarzenie…' style='width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit'></textarea><div class='row'><button class='btn' id='mnSv'>Zapisz</button></div><div id='mnOk' style='margin-top:6px'></div></div>`;
+b.innerHTML=`<div class='ref'><div class='meta' style='margin:0 0 6px'><b id='mnLb'>Podpowiedź</b><span id='mnNav'></span></div><div id='mnTxt'></div><div class='row' style='margin-top:8px'><button class='btn' id='mnNew' style='flex:2'>🔄 Inna podpowiedź (AI)</button><button class='btn' id='mnUse'>✔ Użyj tej</button></div><div id='mnAm' style='font-size:.88rem;min-height:1.2em;margin-top:4px' aria-live='polite'></div></div><div class='ref'><b>Twoja mnemotechnika</b><textarea id='mnTx' rows='3' placeholder='Wymyśl własne skojarzenie…' style='width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit'></textarea><div class='row'><button class='btn' id='mnSv'>Zapisz</button></div><div id='mnOk' style='margin-top:6px'></div></div><div class='ref'><b>🎨 Rysunek skojarzenia</b><p style='font-size:.88rem;margin:6px 0'>Opisz, co ma być na rysunku, a AI narysuje go prosto. Zapisany rysunek pojawi się na fiszce zamiast emotikony.</p><textarea id='mnDs' rows='2' placeholder='Np. lama krzyczy do megafonu' style='width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit'></textarea><div class='row'><button class='btn' id='mnDr' style='flex:2'>🎨 Narysuj (AI)</button><button class='btn' id='mnDk' hidden>✔ Zapisz</button></div><div class='row' style='margin-top:0'><button class='btn' id='mnDx' hidden>🗑 Usuń rysunek</button></div><div id='mnIm' style='text-align:center;margin-top:8px'></div><div id='mnDm' style='font-size:.88rem;min-height:1.2em;margin-top:4px' aria-live='polite'></div></div>`;
 const tx=$('#mnTx');tx.value=mine[w]||'';
 const draw=()=>{$('#mnTxt').textContent=hist[ix];$('#mnLb').textContent=ix===0?'Podpowiedź':'Podpowiedź AI '+ix;$('#mnUse').hidden=hist[ix]===MN0;
 $('#mnNav').innerHTML=hist.length>1?"<button id='mnP' aria-label='Poprzednia podpowiedź'"+(ix?'':' disabled')+">‹</button> "+(ix+1)+" / "+hist.length+" <button id='mnN' aria-label='Następna podpowiedź'"+(ix<hist.length-1?'':' disabled')+">›</button>":'';
@@ -362,6 +376,20 @@ if(hist.length>1){$('#mnP').onclick=()=>{ix--;draw()};$('#mnN').onclick=()=>{ix+
 draw();
 $('#mnSv').onclick=()=>{mine[w]=tx.value.trim();let ok='Zapisano ✓';try{localStorage.setItem('esMemo',JSON.stringify(mine))}catch(e){ok='Zapisano do końca tej sesji ✓'}$('#mnOk').textContent=ok};
 $('#mnUse').onclick=()=>{tx.value=hist[ix];$('#mnSv').click()};
+let cand=null;const dmsg=(t,c)=>{const m=$('#mnDm');m.style.color=c||'var(--mute)';m.textContent=t};
+const imgH=x=>"<img alt='Rysunek skojarzenia' src='"+svgUri(x)+"'>";
+const cardPic=()=>{const f=$('#fiCard').firstElementChild;const h=myPic(w)||pic(w);if(f&&(f.classList.contains('pic')||f.classList.contains('mypic')))f.outerHTML=h;else if(h)$('#fiCard').insertAdjacentHTML('afterbegin',h)};
+const drawD=()=>{const sv=DRW[w];$('#mnIm').innerHTML=cand?imgH(cand.svg):(sv?imgH(sv.svg):'');$('#mnDr').textContent=(cand||sv)?'🔄 Narysuj inaczej':'🎨 Narysuj (AI)';$('#mnDk').hidden=!cand;$('#mnDx').hidden=!sv;dmsg(cand?'Podgląd. Podoba się? Zapisz na fiszce albo narysuj inaczej.':(sv?'Ten rysunek jest na Twojej fiszce.':''))};
+$('#mnDs').value=(DRW[w]&&DRW[w].d)||mine[w]||'';drawD();
+$('#mnDr').onclick=async()=>{const desc=$('#mnDs').value.replace(/[<>]/g,'').trim().slice(0,300);if(!desc){dmsg('Opisz najpierw, co ma być na rysunku.','var(--bad)');return}
+const bt=$('#mnDr');bt.disabled=true;dmsg('AI rysuje…');
+try{const again=(cand||DRW[w])?'\nUczniowi nie spodobał się poprzedni rysunek, więc zrób wyraźnie inną kompozycję.':'';
+const txt=await aiCall(AIS,'RYSUNEK SVG. Narysuj bardzo prosty, kolorowy rysunek w stylu piktogramu z książeczki dla dzieci, który ilustruje skojarzenie pomagające zapamiętać słowo hiszpańskie '+JSON.stringify(w)+' (znaczy: '+JSON.stringify(pl)+'). Opis skojarzenia od ucznia: '+JSON.stringify(desc)+'.'+again+'\nZasady: zwróć wyłącznie kod SVG, bez komentarzy i bez bloku markdown. Użyj viewBox="0 0 200 200" i jasnego tła (rect 200 na 200). Dozwolone elementy: svg, g, path, circle, ellipse, rect, line, polyline, polygon, defs, linearGradient, radialGradient, stop. Bez skryptów, obrazów, linków i stylów zewnętrznych. Najwyżej 40 elementów. Bez napisów. Postacie i przedmioty narysuj z prostych kształtów, wyrazistych kolorów i grubych konturów.',false,.8);
+const svg=svgClean((String(txt).match(/<svg[\s\S]*<\/svg>/i)||[''])[0]);if(!svg)throw new Error('BADSVG');cand={svg,d:desc};drawD()}
+catch(e){dmsg(e.message==='BADSVG'?'AI nie zwróciło poprawnego rysunku. Spróbuj jeszcze raz albo opisz prościej.':aiErr(e),'var(--bad)')}bt.disabled=false};
+$('#mnDk').onclick=()=>{if(!cand)return;DRW[w]=cand;cand=null;saveDRW();drawD();cardPic()};
+$('#mnDx').onclick=()=>{delete DRW[w];saveDRW();cand=null;drawD();cardPic()};
+
 $('#mnNew').onclick=async()=>{const bt=$('#mnNew'),am=$('#mnAm');bt.disabled=true;am.style.color='var(--mute)';am.textContent='AI szuka nowego skojarzenia…';
 try{const prev=hist.filter(x=>x&&x!==MN0).slice(-6);
 const r=aiJson(await aiCall(AIS,'MNEMOTECHNIKA. Słowo hiszpańskie: '+JSON.stringify(w)+'. Znaczenie po polsku: '+JSON.stringify(pl)+'. Kategoria: '+JSON.stringify(cat)+'.\nWymyśl jedno NOWE, łatwe do zapamiętania skojarzenie po polsku, które pomoże zapamiętać to słowo: podobieństwo brzmienia do polskiego słowa, obrazowa scenka albo słowo pokrewne ze znanego języka. Najwyżej 2 krótkie zdania. Skojarzenie musi wyraźnie różnić się od poprzednich: '+JSON.stringify(prev)+'. Zwróć JSON o polu "s" (skojarzenie).',true,.95));
@@ -399,7 +427,7 @@ function fi(){const c=$('#fiCard'),info=$('#srsInfo'),st=srsStats();$('#fiUn').d
 info.textContent=mode==='srs'?'Do powtórki: '+st.d+' · Nowe dziś: '+st.n+' · Opanowane: '+st.m+' / '+st.all:'Tryb swobodny: oceny nie zmieniają harmonogramu powtórek.';
 if(pos>=deck.length){if(mode==='srs'&&tot>0&&pos>0&&G3.bonusDay!==todayK()){G3.bonusDay=todayK();G3.xp+=20;toast('✅ Powtórka na dziś zakończona! +20 XP');confetti(60);snd('goal');saveG()}c.innerHTML=mode==='srs'?'<div class="w">Na dziś gotowe 🎉</div><div class="t">'+(st.nx?'Następna powtórka za '+fmtT(st.nx)+'. ':'')+'Tapnij, by sprawdzić, czy coś czeka.</div>':'<div class="w">Koniec talii</div><div class="t">Umiesz '+known+' z '+tot+'. Tapnij, by zacząć od nowa.</div>';c.onclick=()=>{c.onclick=tog;rebuild()};$('#fiC').textContent='';$('#fiB').style.width='100%';$('#mnBox').innerHTML='';$('#snBox').innerHTML='';$('#fiSn').disabled=true;$('#fiNo').textContent='Jeszcze nie';$('#fiYes').textContent='Umiem';$('#fiEz').textContent='Łatwe';$('#tyBox').innerHTML='';return}
 const w=V[deck[pos]],front=w[dir],back=w[1-dir];
-c.innerHTML=pic(w[0])+'<div class="w">'+(flip?back:front)+'</div><div class="t">'+(flip?'odpowiedź':(tyOn?'wpisz odpowiedź poniżej lub tapnij, by odwrócić':'tapnij, by odwrócić'))+'</div>';
+c.innerHTML=(myPic(w[0])||pic(w[0]))+'<div class="w">'+(flip?back:front)+'</div><div class="t">'+(flip?'odpowiedź':(tyOn?'wpisz odpowiedź poniżej lub tapnij, by odwrócić':'tapnij, by odwrócić'))+'</div>';
 $('#fiC').textContent=(pos+1)+' / '+deck.length;$('#fiB').style.width=(pos/deck.length*100)+'%';
 if(mode==='srs'){$('#fiNo').innerHTML=lab('Jeszcze nie',ivMs(w[0],0));$('#fiYes').innerHTML=lab('Umiem',ivMs(w[0],1));$('#fiEz').innerHTML=lab('Łatwe',ivMs(w[0],2))}else{$('#fiNo').textContent='Jeszcze nie';$('#fiYes').textContent='Umiem';$('#fiEz').textContent='Łatwe'}
 if(autoOn&&ux&&(flip?1-dir:dir)===0)speak(w[0]);mn();sn();ty()}
@@ -957,7 +985,7 @@ txRender();
 $('nav [data-p="tx"]').addEventListener('click',txRender);
 
 /* ===== Kopia zapasowa ===== */
-const BK=['esSrs3','esErr3','esGame3','esUser3','esMemo','esSent','esDone3','esEmo3','esTy3','esTxt3','esVb3'],BKP=['esEmo3','esTy3','esTxt3'];
+const BK=['esSrs3','esErr3','esGame3','esUser3','esMemo','esSent','esDone3','esEmo3','esTy3','esTxt3','esVb3','esMnImg3','esMnAi3'],BKP=['esEmo3','esTy3','esTxt3'];
 const bkMsg=m=>{$('#bkMsg').textContent=m};
 function bkInfo(){let d=null;try{d=localStorage.getItem('esBk3')}catch(e){}$('#bkInfo').textContent=d?'Ostatnia kopia: '+new Date(+d).toLocaleDateString('pl-PL')+'.':'Nie robiłeś jeszcze kopii.'}
 function bkMake(){const d={};BK.forEach(k=>{try{const v=localStorage.getItem(k);if(v!==null)d[k]=v}catch(e){}});return JSON.stringify({app:'mi-espanol',ver:7,date:new Date().toISOString(),data:d})}
