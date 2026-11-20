@@ -1,4 +1,4 @@
-const V = 'mi-espanol-v10-3';
+const V = 'hiszpanski-xi-1';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {

@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1d4e89">
-<meta name="description" content="Mi español X AI: fiszki z powtórkami, quiz, gramatyka, lekcje, dialogi i asystent AI do nauki hiszpańskiego.">
+<meta name="description" content="Hiszpański XI: fiszki z powtórkami, quiz, gramatyka, lekcje, dialogi i asystent AI do nauki hiszpańskiego.">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Español X AI">
+<meta name="apple-mobile-web-app-title" content="Hiszpański XI">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
-<title>Mi español X AI</title>
+<title>Hiszpański XI</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap">
 <style>
 :root{--bg:#f4f7fa;--card:#fff;--ink:#14213d;--mute:#5b6b82;--acc:#1d4e89;--sun:#f2a900;--ok:#1f8a5b;--bad:#c0392b;--line:#d6dee8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -115,7 +115,7 @@ body.noemo .card .pic{display:none}
 </head>
 <body>
 <main>
-<h1>Mi español <span style="color:var(--sun)">X AI</span></h1>
+<h1>Hiszpański <span style="color:var(--sun)">XI</span></h1>
 <button class="vt" id="vTog" aria-pressed="true">🔊 Automatyczny głos: wł.</button>
 <nav role="tablist">
 <button role="tab" aria-selected="true" data-p="hm">Dziś</button>
@@ -152,7 +152,8 @@ body.noemo .card .pic{display:none}
 <div style="position:relative"><div class="card" id="fiCard" tabindex="0" role="button" aria-label="Odwróć fiszkę"></div><button id="fiUn" aria-label="Cofnij ostatnią fiszkę" title="Cofnij" disabled>←</button></div>
 <div id="tyBox"></div>
 <div class="row"><button class="no" id="fiNo">Jeszcze nie</button><button class="yes" id="fiYes">Umiem</button><button class="ez" id="fiEz">Łatwe</button></div>
-<button class="btn" id="fiMn" style="width:100%;margin-top:10px">💡 Pomóż mi zapamiętać</button>
+<div class="row" style="margin-top:10px"><button class="btn" id="fiMn" style="flex:2">💡 Pomóż mi zapamiętać</button><button class="btn" id="fiDel" aria-label="Usuń to słówko z fiszek">🗑 Usuń</button></div>
+<div id="fiUndo" class="ref" style="display:none;margin-top:8px;align-items:center;justify-content:space-between;gap:8px"><span id="fiUndoT"></span><button class="btn" id="fiUndoB" style="flex:0 0 auto">↩ Cofnij</button></div>
 <div id="mnBox"></div>
 <button class="btn" id="fiSn" style="width:100%;margin-top:10px">📖 Zobacz w zdaniu</button>
 <div id="snBox"></div>
@@ -173,6 +174,7 @@ body.noemo .card .pic{display:none}
 <div id="uwMsg" class="fb"></div>
 <details><summary>Moje dodane słówka (<span id="uwN">0</span>)</summary><div id="uwList" style="margin-top:6px"></div><div class="row"><button class="btn" id="uwDelAll">Usuń wszystkie dodane</button></div></details>
 </details>
+<details id="hdDet" class="ref"><summary><b>🗑 Usunięte słówka (<span id="hdN">0</span>)</b></summary><p style="margin:10px 0 6px;font-size:.9rem">Słówka usunięte przyciskiem 🗑 nie pojawiają się w fiszkach, quizie ani statystykach. Możesz je tu przywrócić.</p><div id="hdList" style="margin-top:6px"></div><div class="row"><button class="btn" id="hdAll">Przywróć wszystkie</button></div></details>
 </section>
 
 <section id="tx" class="panel">
@@ -299,6 +301,8 @@ for(const k in R){if(k==='Rzeczowniki podstawowe')continue;const nn=REN[k]||k;R3
 for(const k in R3)R3[k].forEach(q=>V.push([q[0],q[1],k]));
 let UW=[];try{UW=(JSON.parse(localStorage.getItem('esUser3'))||[]).filter(x=>Array.isArray(x)&&x.length>=3)}catch(e){}
 UW.forEach(x=>V.push([x[0],x[1],x[2]]));
+let HID=[];try{HID=(JSON.parse(localStorage.getItem('esHide3'))||[]).filter(x=>Array.isArray(x)&&x.length>=3)}catch(e){}
+{const hs=new Set(HID.map(x=>x[0]));for(let j=V.length-1;j>=0;j--){const x=V[j];if(hs.has(x[0])&&!UW.some(u=>u[0]===x[0]&&u[1]===x[1]&&u[2]===x[2]))V.splice(j,1)}}
 const saveUW=()=>{try{localStorage.setItem('esUser3',JSON.stringify(UW))}catch(e){}};
 const cats=()=>[...new Set(['Wszystkie',...Object.keys(R3),'Moje notatki',...V.map(x=>x[2])])];
 const PL={on:false,paused:false,i:0,items:[],token:0,dg:0};
@@ -985,7 +989,7 @@ txRender();
 $('nav [data-p="tx"]').addEventListener('click',txRender);
 
 /* ===== Kopia zapasowa ===== */
-const BK=['esSrs3','esErr3','esGame3','esUser3','esMemo','esSent','esDone3','esEmo3','esTy3','esTxt3','esVb3','esMnImg3','esMnAi3'],BKP=['esEmo3','esTy3','esTxt3'];
+const BK=['esSrs3','esErr3','esGame3','esUser3','esMemo','esSent','esDone3','esEmo3','esTy3','esTxt3','esVb3','esMnImg3','esMnAi3','esHide3'],BKP=['esEmo3','esTy3','esTxt3'];
 const bkMsg=m=>{$('#bkMsg').textContent=m};
 function bkInfo(){let d=null;try{d=localStorage.getItem('esBk3')}catch(e){}$('#bkInfo').textContent=d?'Ostatnia kopia: '+new Date(+d).toLocaleDateString('pl-PL')+'.':'Nie robiłeś jeszcze kopii.'}
 function bkMake(){const d={};BK.forEach(k=>{try{const v=localStorage.getItem(k);if(v!==null)d[k]=v}catch(e){}});return JSON.stringify({app:'mi-espanol',ver:7,date:new Date().toISOString(),data:d})}
@@ -1275,6 +1279,30 @@ const k=dtKey(dtDay);DTC[k]={t:dtTitle(dtDay),v:t,p:[],raw:t,g:(DTC[k]&&DTC[k].g
 if(!DTC[k].g){DTC[k].g=1;dtSave();if(typeof gain==='function')gain(10,true)}};
 $('#dtPaste').onkeydown=e=>e.stopPropagation();
 dtSync();
+
+/* ===== Usuwanie słówek z fiszek ===== */
+const hdSave=()=>{try{localStorage.setItem('esHide3',JSON.stringify(HID))}catch(e){}};
+let hdLast=null,hdTimer=0;
+function hdRender(){$('#hdN').textContent=new Set(HID.map(w=>w[0])).size;const L=$('#hdList'),seen=new Set();
+L.innerHTML=HID.length?HID.filter(w=>!seen.has(w[0])&&seen.add(w[0])).map(w=>'<div class="uwr"><span>'+esc(w[0])+' – '+esc(w[1])+'</span><button data-k="'+encodeURIComponent(w[0])+'" aria-label="Przywróć słówko" style="color:var(--acc)">↩</button></div>').join(''):'<p style="color:var(--mute);margin:6px 0">Brak usuniętych słówek.</p>';
+L.querySelectorAll('button').forEach(b=>b.onclick=()=>hdRestore([decodeURIComponent(b.dataset.k)]))}
+function hdRestore(keys){const back=HID.filter(w=>keys.includes(w[0]));if(!back.length)return;HID=HID.filter(w=>!keys.includes(w[0]));
+back.forEach(w=>{V.push([w[0],w[1],w[2]]);if(w[3])UW.push([w[0],w[1],w[2]])});hdSave();saveUW();plStop();fillCats();rebuild();quiz();hdRender()}
+function fiDelete(){if(pos>=deck.length)return;const es=V[deck[pos]][0],ent=V.filter(x=>x[0]===es);if(!ent.length)return;
+const isU=x=>UW.some(u=>u[0]===x[0]&&u[1]===x[1]&&u[2]===x[2]),rec=ent.map(x=>[x[0],x[1],x[2],isU(x)?1:0]),ks=deck.map(i=>V[i][0]);
+for(let j=V.length-1;j>=0;j--)if(V[j][0]===es)V.splice(j,1);
+rec.forEach(r=>{if(r[3]){const i=UW.findIndex(u=>u[0]===r[0]&&u[1]===r[1]&&u[2]===r[2]);if(i>=0)UW.splice(i,1)}});
+HID=HID.filter(h=>h[0]!==es).concat(rec);hdSave();saveUW();
+let np=pos;for(let j=0;j<pos;j++)if(ks[j]===es)np--;
+deck=ks.filter(k=>k!==es).map(k=>V.findIndex(x=>x[0]===k)).filter(i=>i>=0);pos=Math.max(0,Math.min(np,deck.length));flip=false;mnOpen=false;tot=deck.length;
+plStop();fillCats();hdRender();fi();
+hdLast=es;clearTimeout(hdTimer);const u=$('#fiUndo');$('#fiUndoT').textContent='Usunięto „'+es+'”.';u.style.display='flex';hdTimer=setTimeout(()=>{u.style.display='none';hdLast=null},12000)}
+$('#fiDel').onclick=fiDelete;
+$('#fiUndoB').onclick=()=>{if(!hdLast)return;const es=hdLast;hdLast=null;clearTimeout(hdTimer);$('#fiUndo').style.display='none';
+const back=HID.filter(w=>w[0]===es);if(!back.length)return;HID=HID.filter(w=>w[0]!==es);back.forEach(w=>{V.push([w[0],w[1],w[2]]);if(w[3])UW.push([w[0],w[1],w[2]])});hdSave();saveUW();
+const ix=V.length-back.length;deck.splice(Math.min(pos,deck.length),0,ix);tot=deck.length;flip=false;fillCats();hdRender();fi()};
+$('#hdAll').onclick=()=>{if(HID.length)hdRestore([...new Set(HID.map(w=>w[0]))])};
+hdRender();
 </script>
 </body>
 </html>
